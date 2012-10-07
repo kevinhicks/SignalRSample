@@ -8,12 +8,19 @@
         
         <style type="text/css">
             
+            .right 
+            {
+                float: right;
+            }
+            
             body {
                 color: #333;
                 font-size: .85em;
                 font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
                 margin: 0;
                 padding: 0;
+                
+                background-color: #d2e4f4;
             }
             
             div.week
@@ -168,12 +175,31 @@
             #menuArea 
             {
                 float: right;
-                background-color:Red;
+                background-color: #97c7f4;
+                
+                margin-right: 20px;
+                padding: 15px;
+                
+                border-radius: 15px; 
+                -moz-border-radius: 15px; 
+                -webkit-border-radius: 15px;  
             }
             
             #chatArea 
             {
-                width: 200px;
+                width: 400px;
+            }
+            
+            #chatInput 
+            {
+                width: 100%;;
+            }
+            
+            .chatLine 
+            {
+                border-bottom: 1px solid #86b8e8;
+                margin-bottom: 5px;
+                
             }
             
         </style>
@@ -213,9 +239,13 @@
                 var chat = $.connection.chatHub;
 
                 chat.addMessage = function (msg, sessnID) {
-                    var chatLine = $("<div />");
+                    var chatLine = $("<div />").addClass("chatLine");
+                    var dateStr = new Date().getHours() + ":" + new Date().getMinutes();
+                    var dateLine = $("<div />").append(dateStr).addClass("right");
+
                     $(chatLine).append(msg);
-                    $("div#conversationArea").append(chatLine);
+                    $(chatLine).append(dateLine);
+                    $("div#conversationArea").prepend(chatLine);
                 };
 
                 $.connection.hub.start();
@@ -339,7 +369,7 @@
         <div id="body">
             <div id="menuArea">
                 <div id="chatArea">
-                    <input id="chatInput" />
+                    <input id="chatInput"/>
                     <div id="conversationArea"></div>
                 </div>
             </div>
