@@ -1,0 +1,373 @@
+﻿<html>
+    <head>
+        
+        @Scripts.Render("~/bundles/modernizr")
+        @Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/signalR")   
+        <script src="/signalr/hubs" type="text/javascript"></script> 
+        
+        <style type="text/css">
+            
+            body {
+                color: #333;
+                font-size: .85em;
+                font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
+                margin: 0;
+                padding: 0;
+            }
+            
+            div.week
+            {
+                background-color: Blue;
+            }
+            
+            .differentMonthDay 
+            {
+                color: Black;
+            }
+            
+            .currentMonthDay 
+            {
+                color: Blue;
+            }
+            
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+    
+            table#calender
+            {
+                clear: left;
+            }
+            
+            table#calender td
+            {
+                width: 100px;
+                height: 100px;
+                
+                border-style: solid;
+                border-width: 1px;
+                
+                text-align: left;
+                vertical-align: top;                
+                
+                font-family: Kristen ITC;
+                font-size: xx-large;
+                background-color: #d0d1d2
+                
+            }
+            
+            table#calender td:hover
+            {
+                background-color: #e3e3e3
+            }
+            
+            table#calender th 
+            {
+                width: 100px;
+                
+                border-style: solid;
+                border-width: 1px;
+                
+                text-align: center;
+                vertical-align: top;
+                
+                background-color: #a0f08f
+            }
+            
+            div.event
+            {
+                height: 20px;
+                width: 100%;
+            }
+            
+            #contextmenu 
+            {
+                background-color: #a5db9a;
+                position:absolute;
+                display:none;
+                padding: 10px;
+                
+                border-radius: 5px; 
+                -moz-border-radius: 5px; 
+                -webkit-border-radius: 5px; 
+            }
+            
+            #contextmenu:hover
+            {
+                background-color: #c3e7bb;
+            }
+            
+            div#calenderArea 
+            {
+                width: 700px;
+                margin: 20px;
+            }
+            
+            #monthArea
+            {
+                width: 700px;
+                margin: auto;
+                
+                margin-bottom: 20px;
+                
+                text-align: center;
+                font-size: xx-large;                
+            }
+            
+            #prevMonthBtn
+            {
+                float: left;
+                background-color: #d0d1d2;                
+             
+                width: 50px;
+                height: 50px;
+                
+                border-radius: 5px; 
+                -moz-border-radius: 5px; 
+                -webkit-border-radius: 5px;
+            }
+            
+            #prevMonthBtn:hover
+            {
+                background-color: #e3e3e3;
+                cursor: pointer;
+            }
+            
+            #monthDisplay
+            {
+                width: 275px;
+                margin: auto;
+            }
+            
+            #nextMonthBtn
+            {
+                float: right;
+                background-color: #d0d1d2;          
+             
+                width: 50px;
+                height: 50px;
+                
+                border-radius: 5px; 
+                -moz-border-radius: 5px; 
+                -webkit-border-radius: 5px;                
+            }
+            
+            #nextMonthBtn:hover
+            {
+                background-color: #e3e3e3;
+                cursor: pointer;
+            }
+            
+            .event
+            {
+                background-color: Lime;
+            }
+            
+            #menuArea 
+            {
+                float: right;
+                background-color:Red;
+            }
+            
+            #chatArea 
+            {
+                width: 200px;
+            }
+            
+        </style>
+        <script language="javascript" type="text/javascript">
+
+            var selectedDay;
+
+            $(function () {
+                //Use this as our cursor, moving thru time
+                var date = new Date();
+
+                drawCalender(date);
+                initContextMenu();
+                initChatSystem();
+
+                $("#nextMonthBtn").click(function () {
+                    date.setMonth(date.getMonth() + 1);
+                    drawCalender(date);
+                    initContextMenu();
+                });
+
+                $("#prevMonthBtn").click(function () {
+                    date.setMonth(date.getMonth() - 1);
+                    drawCalender(date);
+                    initContextMenu();
+                });
+
+                //When we click to asdd a new event.
+                //Simply add a single, 1-day long, event to the selected day. We will be able to adjust its length later.
+                $("#newEvent").click(function () {
+                    addNewEvent(selectedDay);
+                });
+            });
+
+            //Setup all the neat signalR stuff
+            function initChatSystem() {
+                var chat = $.connection.chatHub;
+
+                chat.addMessage = function (msg, sessnID) {
+                    var chatLine = $("<div />");
+                    $(chatLine).append(msg);
+                    $("div#conversationArea").append(chatLine);
+                };
+
+                $.connection.hub.start();
+
+                $("#chatInput").bind('keypress', function (event) {
+                    //On the <Enter> Key
+                    if (event.which == 13) {
+                        chat.send($("#chatInput").val(), "hello");
+                        $("#chatInput").val("");
+                    }
+                });
+            }
+
+            //Add a new event to the slected day
+            function addNewEvent(day) {
+                var event = $("<div/>").addClass("event");
+                $(day).append(event);
+            }
+
+            //All handling of the context menu can go here
+            function initContextMenu() {
+
+                //use our own contect menus in the calender
+                $("td").bind("contextmenu", function (e) {
+                    //Show the contect menu
+                    e.preventDefault();
+                    $("#contextmenu").css({ "top": e.pageY, "left": e.pageX });
+                    $("#contextmenu").show();
+
+                    selectedDay = e.target;
+                });
+
+                //whenever we have a menu open, allow it to be close by clicking outside of it
+                $(document).mouseup(function (e) {
+                    var container = $("#contextmenu");
+
+                    if (container.has(e.target).length === 0) {
+                        container.hide();
+                    }
+                });
+
+                $("#newEvent").click(function () {
+                    //alert(selectedDay.id);
+
+                    $("#contextmenu").hide();
+                });
+            }
+
+            //Draw a calender into the table body
+            function drawCalender(date) {
+                //Names of the days of the week
+                var daysOfWeek = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+                var monthsOfYear = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+
+                //Use this as our cursor, moving thru time
+                var dateCursor = new Date(date.toString());
+
+                //We want our cursor to start on the first of the current month
+                dateCursor.setDate(1);
+
+                //dateCursor.setMonth(1);
+
+                //Make sure the table is empty
+                $("table#calender tbody tr").remove();
+
+                //Hold the month that we are looking at, we will need this later
+                var month = dateCursor.getMonth();
+                $("#monthDisplay").text(monthsOfYear[month] + " / " + dateCursor.getFullYear());
+
+                //1 week = 1 table row
+                var week = $("<tr/>");
+
+                //Show all the days in the first week BEFORE the first of this month
+                var daysInWeekBeforeTheFirst = dateCursor.getDay();                                 
+                dateCursor.setDate(dateCursor.getDate() - daysInWeekBeforeTheFirst);
+                for(var i = 0; i < daysInWeekBeforeTheFirst; i++) {
+                    var d = $("<td>" + dateCursor.getDate() + "</td>").addClass("differentMonthDay");
+                    $(week).append(d);                                                              
+                    dateCursor.setDate(dateCursor.getDate() + 1);                                   
+                }
+
+                //Now we show the current month
+                for (var weeksInMonth = 0; weeksInMonth < 6; weeksInMonth++) {
+
+                    for (var daysInWeek = 0 + daysInWeekBeforeTheFirst; daysInWeek < 7; daysInWeek++) {
+                        var d = $("<td id='" + dateCursor.getDate() + "'>" + dateCursor.getDate() + "</td>").addClass("currentMonthDay");
+                        $(week).append(d);
+
+                        dateCursor.setDate(dateCursor.getDate() + 1);
+                        //If we are at the end of the month, then stop adding days
+                        if (dateCursor.getMonth() != month) {
+                            break;
+                        }
+                    }
+
+                    $("table#calender tbody").append(week);
+
+                    //If we are at the end of the month, then stop adding days
+                    if (dateCursor.getMonth() != month) {
+                        break;
+                    }
+                    daysInWeekBeforeTheFirst = 0;
+
+                    var week = $("<tr/>");
+                }
+
+                //And if we want, we can finish out the last week here...
+                var daysInWeekAfterTheLast = dateCursor.getDay();
+                if(daysInWeekAfterTheLast > 0) {
+                    //dateCursor.setDate(dateCursor.getDate() - daysInWeekBeforeTheFirst);
+                    for (var i = daysInWeekAfterTheLast; i < 7; i++) {
+                        var d = $("<td>" + dateCursor.getDate() + "</td>").addClass("differentMonthDay");
+                        $(week).append(d);
+                        dateCursor.setDate(dateCursor.getDate() + 1);
+                    }
+                }
+            }
+        </script>   
+    </head>
+    <body>
+        <div id="body">
+            <div id="menuArea">
+                <div id="chatArea">
+                    <input id="chatInput" />
+                    <div id="conversationArea"></div>
+                </div>
+            </div>
+            <div id="calenderArea">
+                <div id="monthArea">
+                    <div id="prevMonthBtn">&lt</div>
+                    <span id="monthDisplay"></span>
+                    <div id="nextMonthBtn">&gt</div>
+                </div>
+                <table id="calender">
+                    <thead>
+                        <tr>
+                            <th>Sunday</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                        </tr>
+                    </thead>
+                    <tbody>                
+                    </tbody>
+                </table>       
+            </div>
+            <div id="contextmenu" class="contextmenu">
+                <div id="newEvent">New Event</div>
+            </div>
+        </div>
+    </body>
+</html>

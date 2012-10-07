@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>@ViewBag.Title - My ASP.NET MVC Application</title>
+        <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+        <meta name="viewport" content="width=device-width" />
+        @Styles.Render("~/Content/css")
+        @Scripts.Render("~/bundles/modernizr")
+        
+    </head>
+    <body>
+        <input id="chatInput" />
+        <div id="response">
+        </div>
+
+        @RenderSection("featured", required: false)
+        @RenderBody()
+
+        @Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/signalR")       
+        <script src="/signalr/hubs" type="text/javascript"></script>
+        <script type="text/javascript" language="javascript">
+            $(function () {
+                var chat = $.connection.chatHub;
+
+                chat.addMessage = function (msg, sessnID) {
+                    $("div#response").append(msg);
+                };
+                
+                $.connection.hub.start();
+                
+                $("#chatInput").keyup(function (event) {
+                    chat.send($("#chatInput").val(), "hello");
+                });
+
+            });
+        </script>
+        @RenderSection("scripts", required: false)
+    </body>
+</html>
